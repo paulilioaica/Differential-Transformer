@@ -56,6 +56,7 @@ class MultiHeadAttention(nn.Module):
         QK_T = QK_T / math.sqrt(self.d_k)
 
         if mask:
+            self.mask = self.mask.to(query.device)
             QK_T = QK_T.masked_fill(self.mask == 1, float('-inf'))
 
         # softmax(QK_T / sqrt(d_k)

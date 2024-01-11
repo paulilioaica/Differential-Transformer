@@ -1,6 +1,7 @@
 import torch.nn as nn
 from torch.optim import Adam
 import torch
+from tqdm import tqdm
 
 def run_trainer(model, train_dataloader, test_dataloader, num_epochs, device, lr):
     criterion = nn.CrossEntropyLoss()
@@ -10,7 +11,7 @@ def run_trainer(model, train_dataloader, test_dataloader, num_epochs, device, lr
     model = model.to(device)
 
     for epoch in range(num_epochs):
-        for i, (input_tensor, target_tensor) in enumerate(train_dataloader):
+        for i, (input_tensor, target_tensor) in tqdm(enumerate(train_dataloader), total=len(train_dataloader)):
             input_tensor = input_tensor.to(device)
             target_tensor = target_tensor.to(device)
             # Forward pass
@@ -32,7 +33,7 @@ def run_trainer(model, train_dataloader, test_dataloader, num_epochs, device, lr
     model.eval()
     test_loss = 0
     with torch.no_grad():
-        for i, (input_tensor, target_tensor) in enumerate(test_dataloader):
+        for i, (input_tensor, target_tensor) in tqdm(enumerate(test_dataloader), total=len(test_dataloader)):
             input_tensor = input_tensor.to(device)
             target_tensor = target_tensor.to(device)
             output = model(input_tensor, target_tensor)

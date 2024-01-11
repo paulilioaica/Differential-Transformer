@@ -62,7 +62,7 @@ To get started with Transformer Plain, follow these steps:
 
 ## Example run
 ```
-python main.py  --num_layers 2 --n_heads 8 --seq_len 128 --num_hidden 128 --num_epochs 10 --batch_size 32 --lr 0.001 --device cpu --embedding_dim 128 --dataset_name ag_news
+python main.py  --num_layers 2 --n_heads 8 --seq_len 128 --num_epochs 10 --batch_size 32 --lr 0.001 --device cpu --embedding_dim 128 --dataset_name ag_news
 ```
 
 ## Results after 10 epochs
