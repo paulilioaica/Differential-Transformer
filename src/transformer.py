@@ -188,6 +188,5 @@ class Transformer(nn.Module):
         enc_output = self.encoder(x)
         dec_output = self.decoder(y, enc_output)
         output = self.linear(dec_output)
-        output = F.softmax(output, dim=-1)
 
         return output
