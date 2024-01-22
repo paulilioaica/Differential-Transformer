@@ -1,5 +1,5 @@
 # Pytorch Transformer
-🤖🔮🔥
+
 
 ## Overview
 This is a PyTorch project that implements a plain transformer architecture for self-supervised prediction, which is at the core of LLMs. This project aims to provide a simple and efficient implementation of the transformer model, allowing users to train their own models for various tasks.
