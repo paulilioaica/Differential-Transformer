@@ -1,4 +1,3 @@
-from typing import Any
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
