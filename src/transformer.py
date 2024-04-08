@@ -39,7 +39,7 @@ class MultiHeadAttention(nn.Module):
     
     def get_mask(self, size):
         device = next(self.parameters()).device
-        mask = torch.triu(torch.ones(size, size, device=device), diagonal=0)  
+        mask = torch.triu(torch.ones(size, size, device=device), diagonal=1)  
         return mask.unsqueeze(0).unsqueeze(0)  
 
     def forward(self, query, key, values, dropout=0.1, mask=None):
