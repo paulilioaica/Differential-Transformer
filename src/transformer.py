@@ -40,7 +40,7 @@ class MultiHeadAttention(nn.Module):
     
     def get_mask(self, size):
         device = next(self.parameters()).device
-        mask = torch.triu(torch.ones(size, size, device=device), diagonal=1)  
+        mask = torch.triu(torch.ones(size, size, device=device), diagonal=0)  
         return mask.unsqueeze(0).unsqueeze(0)  
 
     def forward(self, query, key, values, dropout=0.1, mask=None):
@@ -92,7 +92,7 @@ class TransformerEncoderLayer(nn.Module):
     def __init__(self, num_hidden, num_heads, seq_len) -> None:
         super().__init__()
         self.multihead_attention = MultiHeadAttention(num_hidden=num_hidden, num_heads=num_heads, seq_len=seq_len, d_k=1)
-        self.feed_forward = FeedForward(num_hidden=num_hidden, num_ffn_hidden=2*num_hidden)
+        self.feed_forward = FeedForward(num_hidden=num_hidden, num_ffn_hidden=2 * num_hidden)
         self.layer_norm1 = nn.LayerNorm(num_hidden)
         self.layer_norm2 = nn.LayerNorm(num_hidden)
     
@@ -139,7 +139,7 @@ class TransformerDecoderLayer(nn.Module):
         self.multihead_attention_masked = MultiHeadAttention(num_hidden=num_hidden, num_heads=num_heads, seq_len=seq_len, d_k=1)
         self.multihead_attention = MultiHeadAttention(num_hidden=num_hidden, num_heads=num_heads, seq_len=seq_len, d_k=1)
         
-        self.feed_forward = FeedForward(num_hidden=num_hidden, num_ffn_hidden=2*num_hidden)
+        self.feed_forward = FeedForward(num_hidden=num_hidden, num_ffn_hidden= 2 * num_hidden)
         self.layer_norm1 = nn.LayerNorm(num_hidden)
         self.layer_norm2 = nn.LayerNorm(num_hidden)
         self.layer_norm3 = nn.LayerNorm(num_hidden)
