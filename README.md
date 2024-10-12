@@ -1,5 +1,7 @@
 # Differential Transformer
 
+![media](/media/image.png)
+
 ## Overview
 
 This repository provides a PyTorch implementation of the **Differential Transformer (Diff Transformer)**. 
