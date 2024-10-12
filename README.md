@@ -4,7 +4,7 @@
 
 This repository provides a PyTorch implementation of the **Differential Transformer (Diff Transformer)**. 
 
-The Diff Transformer enhances traditional transformer architectures by introducing **differential attention**, which helps reduce noise in attention mechanisms. This architecture is designed to improve long-context modeling, in-context learning, and reduce hallucination, especially in large language models.
+The Diff Transformer enhances traditional transformer architectures by introducing **differential attention**, which helps reduce noise in attention mechanisms. This architecture is designed to improve long-context modeling, in-context learning, and reduce hallucination in large language models.
 
 ## Differential Transformer Architecture
 
@@ -15,8 +15,6 @@ The Diff Transformer builds on the original transformer design, with the followi
 2. **Encoder-Decoder Structure**: Maintains the original encoder and decoder stacks with differential attention integrated, improving both context understanding and generation.
 
 3. **Noise Reduction**: The subtraction mechanism reduces noise and enhances clarity in decision-making processes, improving performance in tasks like language modeling and retrieval.
-
-This approach leads to more efficient learning and accurate predictions in transformer-based models, particularly for large-scale applications.
 
 For further details on the architecture, refer to the paper: [Differential Transformer](https://arxiv.org/pdf/2410.05258).
 
@@ -34,12 +32,3 @@ To get started with the Differential Transformer, clone the repository
 git clone https://github.com/paulilioaica/PyTorch-DiffTransformer
 cd PyTorch-DiffTransformer/src/
 ```
-
-
-## License
-
-This project is licensed under the MIT License.
-
---- 
-
-This README aligns the implementation with the Differential Transformer concept introduced in the article.
