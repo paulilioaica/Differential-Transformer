@@ -27,13 +27,14 @@ class MultiHeadAttention(nn.Module):
         self.seq_len = seq_len
         self.d_k = d_k
 
-        self.W_q = nn.Linear(num_hidden, num_heads * num_hidden)
-        self.W_k = nn.Linear(num_hidden, num_heads * num_hidden)
-        self.W_v = nn.Linear(num_hidden, num_heads * num_hidden)
+        self.W_q = nn.Linear(num_hidden, 2 * num_heads * num_hidden)
+        self.W_k = nn.Linear(num_hidden, 2 * num_heads * num_hidden)
+        self.W_v = nn.Linear(num_hidden, 2 *num_heads * num_hidden)
         self.W_o = nn.Linear(num_heads * num_hidden, num_hidden)
         self.softmax = nn.Softmax(dim=-1)
         self.dropout = nn.Dropout(0.1)
         self.mask = self.get_mask(self.seq_len)
+        self._lambda = nn.Parameter(torch.rand(1))
     
     def get_mask(self, size):
         device = next(self.parameters()).device
@@ -41,25 +42,38 @@ class MultiHeadAttention(nn.Module):
         return mask.unsqueeze(0).unsqueeze(0)  
 
     def forward(self, query, key, values, dropout=0.1, mask=None):
-        query = self.W_q(query).view(-1, self.num_heads, self.seq_len, self.num_hidden)
-        key = self.W_k(key).view(-1, self.num_heads, self.seq_len, self.num_hidden)
-        values = self.W_v(values).view(-1, self.num_heads, self.seq_len, self.num_hidden)
+        query = self.W_q(query).view(-1, self.num_heads, self.seq_len, 2 * self.num_hidden)
+        key = self.W_k(key).view(-1, self.num_heads, self.seq_len, 2 * self.num_hidden)
+        values = self.W_v(values).view(-1, self.num_heads, self.seq_len, 2 * self.num_hidden)
 
-        QK_T = torch.matmul(query,  key.mT)
-        QK_T = QK_T / math.sqrt(self.d_k)
+        #split query into [q1;q2] and same for keys [k1;k2]
+        query_1 = query[:, :, :, :self.num_hidden]
+        query_2 = query[:, :, :, self.num_hidden:]
+
+        key_1 = key[:, :, :, :self.num_hidden]
+        key_2 = key[:, :, :, self.num_hidden:]
+
+        QK_T_1 = torch.matmul(query_1, key_1.mT) / torch.sqrt(self.d_k)
+        QK_T_2 = torch.matmul(query_2, key_2.mT) / torch.sqrt(self.d_k)
+
+        QK_T_1_norm = self.softmax(QK_T_1)
+        QK_T_2_norm = self.softmax(QK_T_2)
+
+        #eq 1
+        attention_scores = (QK_T_1_norm - self._lambda * QK_T_2_norm)
+
 
         if mask:
             self.mask = self.mask.to(query.device)
-            QK_T = QK_T.masked_fill(self.mask == 1, float('-inf'))
-
-        attention_scores = self.softmax(QK_T)
+            attention_scores = attention_scores.masked_fill(self.mask == 1, float('-inf'))
         
         attention_scores = self.dropout(attention_scores)
         output = torch.matmul(attention_scores, values)  
 
         output = output.transpose(1, 2).contiguous().view(-1, self.seq_len, self.num_heads * self.num_hidden)  
+        output = output * (1 - self._lambda)
+
         output = self.W_o(output)  
-          
         return output  
 
 class FeedForward(nn.Module):
@@ -78,7 +92,7 @@ class FeedForward(nn.Module):
 class TransformerEncoderLayer(nn.Module):
     def __init__(self, num_hidden, num_heads, seq_len) -> None:
         super().__init__()
-        self.multihead_attention = MultiHeadAttention(num_hidden=num_hidden, num_heads=num_heads, seq_len=seq_len, d_k=1)
+        self.multihead_attention = MultiHeadAttention(num_hidden=num_hidden, num_heads=num_heads, seq_len=seq_len, d_k=torch.tensor(1))
         self.feed_forward = FeedForward(num_hidden=num_hidden, num_ffn_hidden=2 * num_hidden)
         self.layer_norm1 = nn.LayerNorm(num_hidden)
         self.layer_norm2 = nn.LayerNorm(num_hidden)
