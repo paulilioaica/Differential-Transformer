@@ -1,4 +1,4 @@
-# PyTorch Differential Transformer
+# Differential Transformer
 
 ## Overview
 
