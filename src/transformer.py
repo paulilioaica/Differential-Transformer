@@ -31,10 +31,13 @@ class MultiHeadAttention(nn.Module):
         self.W_k = nn.Linear(num_hidden, 2 * num_heads * num_hidden)
         self.W_v = nn.Linear(num_hidden, num_heads * num_hidden)
         self.W_o = nn.Linear(num_heads * num_hidden, num_hidden)
+        
         self.softmax = nn.Softmax(dim=-1)
         self.dropout = nn.Dropout(0.1)
         self.mask = self.get_mask(self.seq_len)
-        self._lambda = nn.Parameter(torch.rand(1))
+        self.group_norm = nn.GroupNorm(num_groups=num_heads, num_channels=num_heads)
+        self._lambda_init = torch.rand(1)
+        self._lambda = nn.Parameter(self._lambda_init.clone())
     
     def get_mask(self, size):
         device = next(self.parameters()).device
@@ -62,16 +65,18 @@ class MultiHeadAttention(nn.Module):
         #eq 1
         attention_scores = (QK_T_1_norm - self._lambda * QK_T_2_norm)
 
-
         if mask:
             self.mask = self.mask.to(query.device)
             attention_scores = attention_scores.masked_fill(self.mask == 1, float('-inf'))
-        
-        attention_scores = self.dropout(attention_scores)
-        output = torch.matmul(attention_scores, values)  
 
-        output = output.transpose(1, 2).contiguous().view(-1, self.seq_len, self.num_heads * self.num_hidden)  
-        output = output * (1 - self._lambda)
+        attention_scores = self.dropout(attention_scores) 
+        output = torch.matmul(attention_scores, values)  
+        output = output.transpose(1, 2).contiguous().view(-1, self.num_heads , self.seq_len, self.num_hidden)  
+        
+        output = self.group_norm(output)
+        
+        output = output * (1 - self._lambda_init)
+        output = torch.cat([output[:, i, :, :] for i in range(self.num_heads)], dim=-1)
 
         output = self.W_o(output)  
         return output  
