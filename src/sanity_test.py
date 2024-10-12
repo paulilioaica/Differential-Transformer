@@ -1,4 +1,4 @@
-from transfomer import Transformer
+from transformer import Transformer
 import torch
 
 def test_transformer_with_embeddings():

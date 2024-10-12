@@ -3,8 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 
-# Positional encoding definition
-
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, max_len, dropout: float = 0.1):
         super().__init__()
@@ -43,35 +41,27 @@ class MultiHeadAttention(nn.Module):
         return mask.unsqueeze(0).unsqueeze(0)  
 
     def forward(self, query, key, values, dropout=0.1, mask=None):
-        # Reshaping expanded to n_heads
         query = self.W_q(query).view(-1, self.num_heads, self.seq_len, self.num_hidden)
         key = self.W_k(key).view(-1, self.num_heads, self.seq_len, self.num_hidden)
         values = self.W_v(values).view(-1, self.num_heads, self.seq_len, self.num_hidden)
 
-        # Q * K_T
         QK_T = torch.matmul(query,  key.mT)
-
-        # QK_T / sqrt(dk)
         QK_T = QK_T / math.sqrt(self.d_k)
 
         if mask:
             self.mask = self.mask.to(query.device)
             QK_T = QK_T.masked_fill(self.mask == 1, float('-inf'))
 
-        # softmax(QK_T / sqrt(d_k)
         attention_scores = self.softmax(QK_T)
         
-        #dropout
         attention_scores = self.dropout(attention_scores)
         output = torch.matmul(attention_scores, values)  
-        # Reshape and apply output linear layer  
+
         output = output.transpose(1, 2).contiguous().view(-1, self.seq_len, self.num_heads * self.num_hidden)  
         output = self.W_o(output)  
           
         return output  
 
-# Feed forward definition
-    
 class FeedForward(nn.Module):
     def __init__(self, num_hidden, num_ffn_hidden) -> None:
         super().__init__()
@@ -85,8 +75,6 @@ class FeedForward(nn.Module):
         return self.W_2(F.relu(self.W_1(x)))
 
 
-# Transformer definition
-
 class TransformerEncoderLayer(nn.Module):
     def __init__(self, num_hidden, num_heads, seq_len) -> None:
         super().__init__()
@@ -96,14 +84,11 @@ class TransformerEncoderLayer(nn.Module):
         self.layer_norm2 = nn.LayerNorm(num_hidden)
     
     def forward(self, input_with_pos):
-        #attention 
         x = self.multihead_attention(input_with_pos, input_with_pos, input_with_pos)
         
-        #add and norm
         x = x + input_with_pos
         x = self.layer_norm1(x)
 
-        # add norm 
         x_final = self.feed_forward(x)
         x = x + x_final
 
@@ -144,23 +129,18 @@ class TransformerDecoderLayer(nn.Module):
         self.layer_norm3 = nn.LayerNorm(num_hidden)
     
     def forward(self, output_with_pos, encoder_output):
-        # masked attention
         x = self.multihead_attention_masked(output_with_pos, output_with_pos, output_with_pos, mask=True)
-        #add and norm
+
         x = x + output_with_pos
         x = self.layer_norm1(x)
 
-        # attention
         x_attention = self.multihead_attention(encoder_output, encoder_output, x)
 
-        #add and norm
         x = x + x_attention
         x = self.layer_norm2(x)
 
-        #feed forward
         x_forward = self.feed_forward(x)
 
-        #add and norm
         x = x + x_forward
         x = self.layer_norm3(x)
         return x
@@ -176,15 +156,12 @@ class Transformer(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, x, y):
-        #embeddings
         x = self.embedding(x)
         y = self.embedding(y)
 
-        #pos encodings
         x = self.pos_enc(x)
         y = self.pos_enc(y)
 
-        #forward pass
         enc_output = self.encoder(x)
         dec_output = self.decoder(y, enc_output)
         output = self.linear(dec_output)
